@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+:root {
+  --color-forest:       #1a3a2a;
+  --color-forest-light: #2a5040;
+  --color-gold:         #c9a84c;
+  --color-gold-light:   #e0c070;
+  --color-cream:        #faf8f4;
+  --color-parchment:    #f0ebe3;
+  --color-bark:         #7a6a55;
+  --color-stone:        #5a5040;
+  --color-warm-gray:    #9a8f7a;
+  --font-display: var(--font-playfair), 'Georgia', serif;
+  --font-body:    var(--font-dm-sans), 'Helvetica Neue', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { min-width: 0; scroll-behavior: smooth; }
+body { font-family: var(--font-body); background-color: var(--color-cream); }
+
+img, video, iframe, svg { max-width: 100%; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-parchment); }
+::-webkit-scrollbar-thumb { background: #c9a84c80; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-gold); }
+
+::selection { background: #c9a84c30; color: var(--color-forest); }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up         { animation: fadeUp 0.5s ease forwards; }
+.animate-fade-up-delay-1 { animation: fadeUp 0.5s 0.1s ease both; }
+.animate-fade-up-delay-2 { animation: fadeUp 0.5s 0.2s ease both; }
+.animate-fade-up-delay-3 { animation: fadeUp 0.5s 0.3s ease both; }
+.animate-fade-up-delay-4 { animation: fadeUp 0.5s 0.4s ease both; }
