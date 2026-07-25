@@ -222,13 +222,13 @@ export default function NavBar() {
         }
 
         .nav-logo-text {
-          display: none;
+          display: flex;
           flex-direction: column;
         }
 
-        @media (min-width: 480px) {
+        @media (max-width: 767px) {
           .nav-logo-text {
-            display: flex;
+            display: none;
           }
         }
 
@@ -287,11 +287,6 @@ export default function NavBar() {
           }
         }
 
-        @media (max-width: 767px) {
-          .nav-links.nav-links-hide-mobile {
-            display: none;
-          }
-        }
 
         .nav-link {
           position: relative;
@@ -736,7 +731,7 @@ export default function NavBar() {
           </Link>
 
           {/* Nav Links - Always visible, scrollable on mobile for guests */}
-          <div className={`nav-links ${user ? 'nav-links-hide-mobile' : ''}`}>
+          <div className="nav-links">
             {navLinks.map(link => (
               <Link
                 key={link.href}

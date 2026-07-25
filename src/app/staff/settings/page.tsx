@@ -195,27 +195,364 @@ export default function SystemSettingsPage() {
   const totalFees = feeFields.reduce((sum, { field }) => sum + (form[field as keyof typeof form] as number), 0)
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 pb-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#1a3a2a]" style={{ fontFamily: "'Playfair Display', serif" }}>
-            System Settings
-          </h1>
-          <p className="text-sm text-[#7a6a55] mt-1">
-            Configure barangay information and certificate fees
-          </p>
+    <div className="settings-root">
+      <style>{`
+        .settings-root {
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+          padding-bottom: 40px;
+          animation: settingsFadeUp 0.5s ease-out;
+        }
+
+        @keyframes settingsFadeUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .settings-header {
+          position: relative;
+          background: linear-gradient(135deg, #1a3a2a 0%, #143025 50%, #0f261e 100%);
+          border-radius: 1rem;
+          padding: 24px;
+          overflow: hidden;
+        }
+
+        @media (min-width: 640px) {
+          .settings-header {
+            padding: 32px;
+            border-radius: 1.25rem;
+          }
+        }
+
+        .settings-header-pattern {
+          position: absolute;
+          inset: 0;
+          opacity: 0.08;
+          background-image: radial-gradient(circle at 2px 2px, #c9a84c 1px, transparent 0);
+          background-size: 24px 24px;
+          pointer-events: none;
+        }
+
+        .settings-header-glow {
+          position: absolute;
+          top: -50%;
+          right: -10%;
+          width: 300px;
+          height: 300px;
+          border-radius: 50%;
+          background: rgba(201, 168, 76, 0.08);
+          filter: blur(80px);
+          pointer-events: none;
+        }
+
+        .settings-header-content {
+          position: relative;
+          z-index: 10;
+        }
+
+        .settings-header-label {
+          color: #9abfa8;
+          font-size: 0.875rem;
+          margin: 0 0 4px 0;
+        }
+
+        .settings-header-title {
+          font-family: 'Playfair Display', serif;
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: #ffffff;
+          margin: 0;
+          line-height: 1.2;
+        }
+
+        @media (min-width: 640px) {
+          .settings-header-title {
+            font-size: 1.875rem;
+          }
+        }
+
+        .settings-header-sub {
+          color: #7a9a88;
+          font-size: 0.75rem;
+          margin: 8px 0 0 0;
+        }
+
+        .settings-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+        }
+
+        @media (min-width: 640px) {
+          .settings-stats-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+          }
+        }
+
+        .settings-stat-card {
+          background: #ffffff;
+          border: 1px solid #e8e0d5;
+          border-radius: 1rem;
+          padding: 16px;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          transition: all 0.3s ease;
+        }
+
+        .settings-stat-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 12px 24px -8px rgba(26, 58, 42, 0.1);
+        }
+
+        .settings-stat-icon {
+          width: 40px;
+          height: 40px;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .settings-stat-info {
+          min-width: 0;
+        }
+
+        .settings-stat-value {
+          font-family: 'Playfair Display', serif;
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: #1a3a2a;
+          margin: 0;
+          line-height: 1.2;
+        }
+
+        .settings-stat-label {
+          font-size: 0.7rem;
+          color: #9a8f7a;
+          margin: 2px 0 0 0;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        }
+
+        .settings-grid {
+          display: grid;
+          gap: 24px;
+        }
+
+        @media (min-width: 1024px) {
+          .settings-grid {
+            grid-template-columns: 1.15fr 0.85fr;
+          }
+        }
+
+        .settings-card {
+          background: #ffffff;
+          border-radius: 1rem;
+          border: 1px solid #e8e0d5;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+          overflow: hidden;
+        }
+
+        .settings-card-header {
+          padding: 18px 20px;
+          border-bottom: 1px solid #f0ebe3;
+          background: #faf8f4;
+        }
+
+        @media (min-width: 640px) {
+          .settings-card-header {
+            padding: 20px 24px;
+          }
+        }
+
+        .settings-card-title {
+          font-family: 'Playfair Display', serif;
+          font-size: 1.05rem;
+          font-weight: 700;
+          color: #1a3a2a;
+          margin: 0;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .settings-card-title svg {
+          width: 18px;
+          height: 18px;
+          color: #c9a84c;
+        }
+
+        .settings-card-body {
+          padding: 20px;
+        }
+
+        @media (min-width: 640px) {
+          .settings-card-body {
+            padding: 24px;
+          }
+        }
+
+        .settings-field {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .settings-label {
+          font-size: 0.625rem;
+          font-weight: 700;
+          color: #5a5040;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .settings-input {
+          width: 100%;
+          padding: 10px 14px;
+          border-radius: 10px;
+          border: 1px solid #ddd5c8;
+          background: #ffffff;
+          font-size: 0.875rem;
+          color: #1a3a2a;
+          transition: all 0.2s ease;
+          outline: none;
+        }
+
+        .settings-input:focus {
+          border-color: #c9a84c;
+          box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.15);
+        }
+
+        .settings-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 0.7rem;
+          font-weight: 700;
+          color: #1a3a2a;
+          background: #f7f4ef;
+          padding: 4px 8px;
+          border-radius: 999px;
+          border: 1px solid #e8e0d5;
+        }
+
+        .settings-fee-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px;
+          border-radius: 12px;
+          border: 1px solid #f0ebe3;
+          transition: all 0.2s ease;
+        }
+
+        .settings-fee-item:hover {
+          border-color: #ddd5c8;
+          background: #faf8f4;
+        }
+
+        .settings-fee-icon {
+          width: 44px;
+          height: 44px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .settings-preview {
+          background: linear-gradient(135deg, #faf8f4 0%, #f3ede4 100%);
+          border-radius: 14px;
+          border: 1px solid #e8e0d5;
+          padding: 20px;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .settings-preview-label {
+          font-size: 0.625rem;
+          font-weight: 800;
+          color: #9a8f7a;
+          text-transform: uppercase;
+          letter-spacing: 0.2em;
+        }
+
+        .settings-preview-title {
+          font-family: 'Playfair Display', serif;
+          font-size: 1.25rem;
+          color: #1a3a2a;
+          font-weight: 700;
+          margin: 0;
+        }
+
+        .settings-preview-sub {
+          font-size: 0.75rem;
+          color: #7a6a55;
+          margin: 0;
+        }
+
+        .settings-preview-divider {
+          width: 48px;
+          height: 2px;
+          background: #c9a84c;
+          margin: 0 auto;
+        }
+
+        .settings-save-card {
+          padding: 20px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .settings-save-action {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 12px 16px;
+          border-radius: 12px;
+          background: #1a3a2a;
+          color: #c9a84c;
+          font-weight: 700;
+          transition: all 0.2s ease;
+          border: none;
+          cursor: pointer;
+        }
+
+        .settings-save-action:hover:not(:disabled) {
+          background: #0f2419;
+          transform: translateY(-1px);
+        }
+
+        .settings-save-action:disabled {
+          opacity: 0.55;
+          cursor: not-allowed;
+          transform: none;
+        }
+      `}</style>
+
+      <div className="settings-header">
+        <div className="settings-header-pattern" />
+        <div className="settings-header-glow" />
+        <div className="settings-header-content">
+          <p className="settings-header-label">Staff Portal</p>
+          <h1 className="settings-header-title">System Settings</h1>
+          <p className="settings-header-sub">Configure barangay information, certificate details, and fees from one polished workspace.</p>
         </div>
-        {touched && (
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200 self-start sm:self-auto">
-            <AlertCircle size={12} />
-            Unsaved changes
-          </span>
-        )}
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="settings-stats-grid">
         <StatCard
           icon={<Building2 size={16} />}
           label="Barangay"
@@ -246,64 +583,53 @@ export default function SystemSettingsPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Left Column - Settings */}
-        <div className="lg:col-span-3 space-y-6">
-          {/* Barangay Info */}
-          <div className="bg-white rounded-2xl border border-[#e8e0d5] shadow-sm overflow-hidden">
-            <div className="px-5 sm:px-6 py-4 border-b border-[#f7f4ef] bg-[#faf8f4]">
-              <h2 className="font-bold text-[#1a3a2a] text-sm flex items-center gap-2" style={{ fontFamily: "'Playfair Display', serif" }}>
-                <div className="w-8 h-8 rounded-lg bg-[#1a3a2a] flex items-center justify-center">
-                  <Building2 size={15} className="text-[#c9a84c]" />
-                </div>
+      <div className="settings-grid">
+        <div className="space-y-6">
+          <div className="settings-card">
+            <div className="settings-card-header">
+              <h2 className="settings-card-title">
+                <Building2 size={16} />
                 Barangay Information
               </h2>
             </div>
-            <div className="p-5 sm:p-6 space-y-5">
-              <div>
-                <label className="block text-[10px] font-bold text-[#9a8f7a] uppercase tracking-widest mb-2">
-                  Barangay Name
-                </label>
+            <div className="settings-card-body space-y-5">
+              <div className="settings-field">
+                <label className="settings-label">Barangay Name</label>
                 <input
                   type="text"
                   value={form.barangay_name}
                   onChange={e => set('barangay_name', e.target.value)}
                   placeholder="e.g. San Isidro"
-                  className="w-full px-4 py-3 rounded-xl border border-[#ddd5c8] bg-[#faf8f4] text-sm font-semibold text-[#1a3a2a] focus:outline-none focus:ring-2 focus:ring-[#c9a84c]/30 focus:border-[#c9a84c] transition-all placeholder:text-[#b0a898]"
+                  className="settings-input"
                 />
               </div>
-              <div>
-                <label className="block text-[10px] font-bold text-[#9a8f7a] uppercase tracking-widest mb-2">
-                  Barangay Captain&apos;s Full Name
-                </label>
+              <div className="settings-field">
+                <label className="settings-label">Barangay Captain&apos;s Full Name</label>
                 <input
                   type="text"
                   value={form.captain_name}
                   onChange={e => set('captain_name', e.target.value)}
                   placeholder="Hon. Eduardo I. Madeja"
-                  className="w-full px-4 py-3 rounded-xl border border-[#ddd5c8] bg-[#faf8f4] text-sm font-semibold text-[#1a3a2a] focus:outline-none focus:ring-2 focus:ring-[#c9a84c]/30 focus:border-[#c9a84c] transition-all placeholder:text-[#b0a898]"
+                  className="settings-input"
                 />
-                <p className="text-xs text-[#9a8f7a] mt-2 flex items-center gap-1">
+                <p className="flex items-center gap-1 text-xs text-[#9a8f7a]">
                   <User size={11} />
-                  This name appears on all generated certificates
+                  This name appears on all generated certificates.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Certificate Fees */}
-          <div className="bg-white rounded-2xl border border-[#e8e0d5] shadow-sm overflow-hidden">
-            <div className="px-5 sm:px-6 py-4 border-b border-[#f7f4ef] bg-[#faf8f4]">
-              <h2 className="font-bold text-[#1a3a2a] text-sm flex items-center gap-2" style={{ fontFamily: "'Playfair Display', serif" }}>
-                <div className="w-8 h-8 rounded-lg bg-[#1a3a2a] flex items-center justify-center">
-                  <Receipt size={15} className="text-[#c9a84c]" />
-                </div>
+          <div className="settings-card">
+            <div className="settings-card-header">
+              <h2 className="settings-card-title">
+                <Receipt size={16} />
                 Certificate Fees
               </h2>
             </div>
-            <div className="p-5 sm:p-6">
-              <p className="text-xs text-[#9a8f7a] mb-5 bg-[#f7f4ef] px-3 py-2 rounded-lg border border-[#e8e0d5]">
-                <span className="font-bold text-[#7a6a55]">Note:</span> Cedula fee shown is the base fee. Final amount depends on gross annual income and will be computed by staff.
+            <div className="settings-card-body">
+              <p className="mb-4 rounded-lg border border-[#e8e0d5] bg-[#f7f4ef] px-3 py-2 text-xs text-[#7a6a55]">
+                <span className="font-bold text-[#1a3a2a]">Note:</span> Cedula fee shown is the base fee. Final amount depends on gross annual income and will be computed by staff.
               </p>
               <div className="space-y-3">
                 {feeFields.map(({ field, label, key }) => {
@@ -312,27 +638,21 @@ export default function SystemSettingsPage() {
                   const isFree = value === 0
 
                   return (
-                    <div
-                      key={field}
-                      className="flex items-center gap-3 sm:gap-4 p-3 rounded-xl border border-[#f0ebe3] hover:border-[#ddd5c8] hover:shadow-sm transition-all group"
-                    >
-                      <div
-                        className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-all"
-                        style={{ background: colors.bg, color: colors.icon, border: `1px solid ${colors.border}` }}
-                      >
+                    <div key={field} className="settings-fee-item">
+                      <div className="settings-fee-icon" style={{ background: colors.bg, color: colors.icon, border: `1px solid ${colors.border}` }}>
                         {CERT_ICONS[key]}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-[#1a3a2a] truncate">{label}</p>
+                        <p className="text-sm font-bold text-[#1a3a2a]">{label}</p>
                         {isFree ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 mt-0.5">
-                            <CheckCircle2 size={9} /> Free of charge
+                          <span className="settings-pill mt-1">
+                            <CheckCircle2 size={10} /> Free of charge
                           </span>
                         ) : (
-                          <p className="text-xs text-[#9a8f7a] mt-0.5">Base fee amount</p>
+                          <p className="mt-1 text-xs text-[#9a8f7a]">Base fee amount</p>
                         )}
                       </div>
-                      <div className="relative w-28 sm:w-32 shrink-0">
+                      <div className="relative w-24 sm:w-28 shrink-0">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9a8f7a] text-sm font-bold">₱</span>
                         <input
                           type="number"
@@ -350,87 +670,75 @@ export default function SystemSettingsPage() {
           </div>
         </div>
 
-        {/* Right Column - Preview & Actions */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Live Preview */}
-          <div className="bg-white rounded-2xl border border-[#e8e0d5] shadow-sm overflow-hidden lg:sticky lg:top-6">
-            <div className="px-5 py-4 border-b border-[#f7f4ef] bg-[#faf8f4] flex items-center justify-between">
-              <h2 className="font-bold text-[#1a3a2a] text-sm flex items-center gap-2" style={{ fontFamily: "'Playfair Display', serif" }}>
-                <div className="w-8 h-8 rounded-lg bg-[#1a3a2a] flex items-center justify-center">
-                  <Eye size={15} className="text-[#c9a84c]" />
-                </div>
+        <div className="space-y-6">
+          <div className="settings-card lg:sticky lg:top-6">
+            <div className="settings-card-header">
+              <h2 className="settings-card-title">
+                <Eye size={16} />
                 Live Preview
               </h2>
             </div>
-            <div className="p-5">
-              <div className="bg-[#faf8f4] rounded-xl border border-[#e8e0d5] p-6 text-center space-y-3">
-                <p className="text-[10px] text-[#9a8f7a] uppercase tracking-[0.2em] font-semibold">
-                  Republic of the Philippines
-                </p>
-                <div className="w-12 h-0.5 bg-[#c9a84c] mx-auto" />
-                <p className="font-bold text-[#1a3a2a] text-xl sm:text-2xl" style={{ fontFamily: "'Playfair Display', serif" }}>
+            <div className="settings-card-body space-y-5">
+              <div className="settings-preview">
+                <p className="settings-preview-label">Republic of the Philippines</p>
+                <div className="settings-preview-divider" />
+                <p className="settings-preview-title">
                   {form.barangay_name ? `BARANGAY ${form.barangay_name.toUpperCase()}` : 'BARANGAY ______'}
                 </p>
-                <p className="text-xs text-[#7a6a55] font-medium">
-                  Office of the Barangay Captain
-                </p>
-                <div className="pt-3 mt-3 border-t border-dashed border-[#ddd5c8]">
-                  <p className="text-[10px] text-[#9a8f7a] uppercase tracking-wider font-semibold mb-1">
-                    Digitally signed by
-                  </p>
-                  <p className="text-sm font-bold text-[#1a3a2a]">
-                    {form.captain_name || '—'}
-                  </p>
+                <p className="settings-preview-sub">Office of the Barangay Captain</p>
+                <div className="border-t border-dashed border-[#ddd5c8] pt-3 w-full">
+                  <p className="settings-preview-label mb-1">Digitally signed by</p>
+                  <p className="text-sm font-bold text-[#1a3a2a]">{form.captain_name || '—'}</p>
                 </div>
               </div>
 
-              {/* Fee Summary */}
-              <div className="mt-5 space-y-2">
-                <p className="text-[10px] font-bold text-[#9a8f7a] uppercase tracking-widest mb-2">
-                  Fee Summary
-                </p>
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold text-[#9a8f7a] uppercase tracking-widest">Fee Summary</p>
                 {feeFields.map(({ field, label }) => {
                   const value = form[field as keyof typeof form] as number
                   if (value === 0) return null
                   return (
-                    <div key={field} className="flex items-center justify-between text-xs py-1.5 border-b border-dashed border-[#f0ebe3] last:border-0">
-                      <span className="text-[#7a6a55] font-medium">{label}</span>
+                    <div key={field} className="flex items-center justify-between border-b border-dashed border-[#f0ebe3] py-1.5 text-xs last:border-0">
+                      <span className="text-[#7a6a55]">{label}</span>
                       <span className="font-bold text-[#1a3a2a]">₱{value.toLocaleString()}</span>
                     </div>
                   )
                 })}
-                <div className="flex items-center justify-between pt-2 border-t-2 border-[#e8e0d5]">
-                  <span className="text-xs font-bold text-[#5a5040]">Total Base Fees</span>
-                  <span className="text-sm font-bold text-[#1a3a2a]">₱{totalFees.toLocaleString()}</span>
+                <div className="flex items-center justify-between border-t-2 border-[#e8e0d5] pt-2 text-sm">
+                  <span className="font-bold text-[#5a5040]">Total Base Fees</span>
+                  <span className="font-bold text-[#1a3a2a]">₱{totalFees.toLocaleString()}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Save Button */}
-          <div className="bg-white rounded-2xl border border-[#e8e0d5] shadow-sm p-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-[#1a3a2a] flex items-center justify-center shrink-0">
-                <Save size={18} className="text-[#c9a84c]" />
+          <div className="settings-card">
+            <div className="settings-save-card">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1a3a2a] text-[#c9a84c]">
+                  <Save size={18} />
+                </div>
+                <div>
+                  <p className="font-bold text-[#1a3a2a]">Save Changes</p>
+                  <p className="text-xs text-[#9a8f7a]">Update system configuration</p>
+                </div>
               </div>
-              <div>
-                <p className="font-bold text-[#1a3a2a] text-sm">Save Changes</p>
-                <p className="text-xs text-[#9a8f7a]">Update system configuration</p>
-              </div>
+
+              <button
+                onClick={handleSave}
+                disabled={saving || !touched}
+                className="settings-save-action"
+              >
+                {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                {saving ? 'Saving...' : touched ? 'Save Settings' : 'No Changes'}
+              </button>
+
+              {!touched && settings && (
+                <p className="flex items-center justify-center gap-1 text-center text-xs text-[#9a8f7a]">
+                  <CheckCircle2 size={11} /> All settings are up to date
+                </p>
+              )}
             </div>
-            <button
-              onClick={handleSave}
-              disabled={saving || !touched}
-              className="w-full flex items-center justify-center gap-2 px-5 py-3.5 bg-[#1a3a2a] text-[#c9a84c] font-bold rounded-xl hover:bg-[#0f2419] active:scale-[0.98] transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 shadow-lg shadow-[#1a3a2a]/20"
-            >
-              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-              {saving ? 'Saving...' : touched ? 'Save Settings' : 'No Changes'}
-            </button>
-            {!touched && settings && (
-              <p className="text-xs text-[#9a8f7a] text-center mt-2 flex items-center justify-center gap-1">
-                <CheckCircle2 size={11} /> All settings are up to date
-              </p>
-            )}
           </div>
         </div>
       </div>
