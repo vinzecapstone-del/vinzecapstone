@@ -183,7 +183,7 @@ export default function VerifyPage() {
           <div className="grid sm:grid-cols-3 gap-4 mt-4">
             {[
               { icon: '🔢', title: 'Enter Tracking Number', desc: 'Type the tracking number printed on the certificate (e.g. BRY-2025-XXXXXX).' },
-              { icon: '🔍', title: 'Click Verify', desc: 'Our system will check the certificate against official barangay records.' },
+              { icon: '🔍', title: 'Click Verify', desc: 'Our systems will check the certificate against official barangay records.' },
               { icon: '✅', title: 'View Result', desc: 'You\'ll see if the certificate is authentic, pending, or not found.' },
             ].map((item, i) => (
               <div key={i} className="bg-white rounded-2xl border border-[#e8e0d5] p-5 text-center">
