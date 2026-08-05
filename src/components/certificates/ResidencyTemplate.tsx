@@ -1,4 +1,11 @@
 import type { CertificateTemplateData } from '@/types'
+import type { StaticImageData } from 'next/image'
+import logoSrc from '../../../assets/logo.jpeg'
+import sealSrc from '../../../assets/seal.jpeg'
+
+function getImageSource(src: string | StaticImageData) {
+  return typeof src === 'string' ? src : src.src
+}
 
 interface Props {
   data: CertificateTemplateData
@@ -59,34 +66,41 @@ export default function ResidencyTemplate({ data }: Props) {
       <div style={{ position: 'relative', zIndex: 1 }}>
 
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <p style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: '#666', marginBottom: '4px' }}>
-            Republic of the Philippines
-          </p>
-          <p style={{ fontSize: '11px', color: '#555', marginBottom: '2px' }}>
-            Province · Municipality
-          </p>
-          <h1 style={{
-            fontSize: '26px', fontWeight: 'bold', color: '#1a3a2a',
-            margin: '8px 0 4px', letterSpacing: '1px',
-          }}>
-            BARANGAY {data.barangay_name.toUpperCase()}
-          </h1>
-          <p style={{ fontSize: '10px', color: '#777' }}>Office of the Barangay Captain</p>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '14px 0' }}>
-            <div style={{ flex: 1, height: '1px', background: '#c9a84c' }} />
-            <div style={{ width: '8px', height: '8px', background: '#c9a84c', transform: 'rotate(45deg)' }} />
-            <div style={{ flex: 1, height: '1px', background: '#c9a84c' }} />
+        <div style={{ marginBottom: '28px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '18px', marginBottom: '18px' }}>
+            <img src={getImageSource(logoSrc)} alt="Barangay Logo" style={{ width: '100px', height: '100px', objectFit: 'contain' }} />
+            <div style={{ flex: 1, textAlign: 'center', minWidth: '260px' }}>
+              <p style={{ fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: '#666', marginBottom: '4px' }}>
+                Republic of the Philippines
+              </p>
+              <p style={{ fontSize: '11px', color: '#555', marginBottom: '2px' }}>
+                Province · Municipality
+              </p>
+              <h1 style={{
+                fontSize: '26px', fontWeight: 'bold', color: '#1a3a2a',
+                margin: '8px 0 4px', letterSpacing: '1px',
+              }}>
+                BARANGAY {data.barangay_name.toUpperCase()}
+              </h1>
+              <p style={{ fontSize: '10px', color: '#777' }}>Office of the Barangay Captain</p>
+            </div>
           </div>
 
-          <h2 style={{
-            fontSize: '20px', fontWeight: 'bold', color: '#1a3a2a',
-            letterSpacing: '3px', textDecoration: 'underline',
-            textUnderlineOffset: '4px',
-          }}>
-            CERTIFICATE OF RESIDENCY
-          </h2>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', margin: '14px 0' }}>
+              <div style={{ flex: 1, height: '1px', background: '#c9a84c' }} />
+              <div style={{ width: '8px', height: '8px', background: '#c9a84c', transform: 'rotate(45deg)' }} />
+              <div style={{ flex: 1, height: '1px', background: '#c9a84c' }} />
+            </div>
+
+            <h2 style={{
+              fontSize: '20px', fontWeight: 'bold', color: '#1a3a2a',
+              letterSpacing: '3px', textDecoration: 'underline',
+              textUnderlineOffset: '4px',
+            }}>
+              CERTIFICATE OF RESIDENCY
+            </h2>
+          </div>
         </div>
 
         <p style={{ marginBottom: '20px', fontSize: '13px' }}>TO WHOM IT MAY CONCERN:</p>
@@ -146,6 +160,15 @@ export default function ResidencyTemplate({ data }: Props) {
           </div>
         </div>
 
+        <img
+          src={getImageSource(sealSrc)}
+          alt="Barangay Seal"
+          style={{
+            position: 'absolute', right: '0', bottom: '100px',
+            width: '120px', height: 'auto', objectFit: 'contain',
+            zIndex: 1,
+          }}
+        />
         {/* Footer */}
         <div style={{
           borderTop: '1px solid #ccc', paddingTop: '12px',

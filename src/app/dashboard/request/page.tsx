@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { generateTrackingNumber } from '@/lib/utils'
 import { toast } from 'sonner'
-import { Loader2, Upload, CheckCircle2, ChevronRight, ArrowLeft } from 'lucide-react'
+import { Loader2, CheckCircle2, ChevronRight, ArrowLeft } from 'lucide-react'
 import type { CertificateType, Profile } from '@/types'
 import {
   CERTIFICATE_LABELS, CERTIFICATE_DESCRIPTIONS,
@@ -45,7 +45,6 @@ interface RequestFormState {
   certificate_type: CertificateType | ''
   purpose: string
   purpose_other: string
-  id_file: File | null
   full_name: string
   birthdate: string
   purok: string
@@ -70,7 +69,6 @@ const createEmptyForm = (overrides: Partial<RequestFormState> = {}): RequestForm
   certificate_type: '',
   purpose: '',
   purpose_other: '',
-  id_file: null,
   full_name: '',
   birthdate: '',
   purok: '',
@@ -181,18 +179,6 @@ function RequestFormInner() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
 
-      let id_document_url = ''
-      if (form.id_file) {
-        const ext = form.id_file.name.split('.').pop()
-        const path = `${user.id}/${Date.now()}.${ext}`
-        const { error: uploadError } = await supabase.storage
-          .from('documents').upload(path, form.id_file)
-        if (!uploadError) {
-          const { data: urlData } = supabase.storage.from('documents').getPublicUrl(path)
-          id_document_url = urlData.publicUrl
-        }
-      }
-
       const tracking = generateTrackingNumber()
       const purpose = form.purpose === 'Other' ? form.purpose_other : form.purpose
 
@@ -206,7 +192,6 @@ function RequestFormInner() {
         payment_status: (fee > 0 && form.payment_method === 'digital' && form.payment_reference) ? 'paid' : 'unpaid',
         payment_method: fee > 0 ? form.payment_method : undefined,
         reference_number: form.payment_method === 'digital' ? form.payment_reference || undefined : undefined,
-        id_document_url,
         applicant_name: form.full_name,
         applicant_birthdate: form.birthdate,
         applicant_purok: form.purok,
@@ -1314,28 +1299,6 @@ function RequestFormInner() {
               </div>
             )}
 
-            {/* Upload */}
-            <div>
-              <label className="req-label">Upload Valid ID</label>
-              <label className="req-upload">
-                <input
-                  type="file"
-                  accept="image/*,.pdf"
-                  className="hidden"
-                  onChange={e => set('id_file', e.target.files?.[0] ?? null)}
-                />
-                <Upload size={22} />
-                {form.id_file ? (
-                  <p className="req-upload-file">{form.id_file.name}</p>
-                ) : (
-                  <>
-                    <p className="req-upload-text">Click to upload</p>
-                    <p className="req-upload-hint">JPG, PNG, or PDF · Max 5MB</p>
-                  </>
-                )}
-              </label>
-            </div>
-
             <div className="req-actions">
               <button onClick={() => setStep(1)} className="req-btn req-btn-outline">
                 <ArrowLeft size={16} />
@@ -1406,7 +1369,6 @@ function RequestFormInner() {
                 ] : []),
                 { label: 'Purpose', value: form.purpose === 'Other' ? form.purpose_other : form.purpose },
                 { label: 'Fee', value: fee === 0 ? 'Free' : `₱${fee}.00` },
-                { label: 'ID Document', value: form.id_file ? form.id_file.name : 'Not uploaded' },
               ].map(({ label, value }) => (
                 <div key={label} className="req-review-row">
                   <span className="req-review-label">{label}</span>

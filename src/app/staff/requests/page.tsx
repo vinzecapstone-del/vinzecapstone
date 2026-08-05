@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
+import type { StaticImageData } from 'next/image'
+import logoSrc from '../../../../assets/logo.jpeg'
+import sealSrc from '../../../../assets/seal.jpeg'
 import {
   Search, CheckCircle2, XCircle, Loader2, Clock,
   ExternalLink, Eye, Download, MapPin, Filter,
@@ -12,6 +15,13 @@ import {
 } from 'lucide-react'
 import type { CertificateRequest, Profile, SystemSettings } from '@/types'
 import { CERTIFICATE_LABELS, REQUEST_STATUS_LABELS } from '@/types'
+
+function getImageSource(src: string | StaticImageData) {
+  return typeof src === 'string' ? src : src.src
+}
+
+const logoUrl = getImageSource(logoSrc)
+const sealUrl = getImageSource(sealSrc)
 
 type RequestWithProfile = CertificateRequest & { profiles: Profile | null }
 
@@ -118,6 +128,7 @@ function generateCertificateHTML(req: RequestWithProfile, settings: SystemSettin
   <div class="border-outer"></div>
   <div class="border-inner"></div>
   <div class="content">
+    <img src="${logoUrl}" alt="Barangay Logo" style="position:absolute;top:60px;left:60px;width:100px;height:auto;object-fit:contain;z-index:1;" />
     <div class="header">
       <div class="republic">Republic of the Philippines</div>
       <div class="province">Province &bull; Municipality</div>
@@ -170,6 +181,7 @@ function generateCertificateHTML(req: RequestWithProfile, settings: SystemSettin
         ${req.reference_number ? `<div class="ref-box">Ref. No.: ${req.reference_number}</div>` : ''}
       </div>
     </div>
+    <img src="${sealUrl}" alt="Barangay Seal" style="position:absolute;right:60px;bottom:120px;width:120px;height:auto;object-fit:contain;z-index:1;" />
     <div class="footer">
       <span>Tracking No: <strong style="color:#555">${req.tracking_number}</strong>${req.reference_number ? ` &bull; Ref. No.: <strong style="color:#555">${req.reference_number}</strong>` : ''}</span>
       <span>Generated: ${today}</span>
