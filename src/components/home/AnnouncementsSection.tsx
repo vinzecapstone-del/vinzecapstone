@@ -454,13 +454,6 @@ export default function AnnouncementsSection() {
             </div>
           ))}
         </div>
-
-        <div className="ann-cta">
-          <Link href="/announcements" className="ann-btn">
-            <span>View All Announcements</span>
-            <ArrowRight className="ann-btn-icon" />
-          </Link>
-        </div>
       </div>
 
       <div className="ann-bottom-line" />

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Eye, EyeOff, Loader2, CheckCircle2, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, Loader2, CheckCircle2, ArrowLeft, Upload } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { PUROK_LIST } from '@/types'
@@ -25,10 +25,11 @@ export default function RegisterForm({ onSwitchToLogin }: Props) {
     purok: '',
     contact_number: '',
     address: '',
+    valid_id_file: null as File | null,
     house_type: '',
-    is_pwd: false,
-    is_senior: false,
+    house_type_other: '',
     government_beneficiary: 'None',
+    government_beneficiary_other: '',
     with_electricity: false,
     with_bathroom: false,
     monthly_income: '',
@@ -70,6 +71,11 @@ export default function RegisterForm({ onSwitchToLogin }: Props) {
     if (!/\S+@\S+\.\S+/.test(form.email)) return 'Enter a valid email.'
     if (!form.birthdate) return 'Birthdate is required.'
     if (!form.purok) return 'Please select your Purok.'
+    if (!form.valid_id_file) return 'Please upload a valid government ID.'
+    if (!form.valid_id_file.type.startsWith('image/')) return 'Valid ID must be an image file.'
+    if (form.valid_id_file.size > 5 * 1024 * 1024) return 'Valid ID image must be 5 MB or smaller.'
+    if (form.house_type === 'Others' && !form.house_type_other.trim()) return 'Please specify the house type.'
+    if (form.government_beneficiary === 'Others' && !form.government_beneficiary_other.trim()) return 'Please specify the government benefit.'
     if (form.password.length < 8) return 'Password must be at least 8 characters.'
     if (form.password !== form.confirm_password) return 'Passwords do not match.'
     if (!form.agree_terms) return 'You must agree to the Terms and Data Privacy Act.'
@@ -105,6 +111,25 @@ export default function RegisterForm({ onSwitchToLogin }: Props) {
         return
       }
 
+      const validIdFile = form.valid_id_file
+      if (!validIdFile) {
+        toast.error('Please upload a valid government ID.')
+        return
+      }
+
+      const idExtension = validIdFile.name.split('.').pop() || 'jpg'
+      const idPath = `${data.user.id}/profile-id-${Date.now()}.${idExtension}`
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(idPath, validIdFile)
+
+      if (uploadError) {
+        toast.error(`Unable to upload your valid ID: ${uploadError.message}`)
+        return
+      }
+
+      const { data: validIdData } = supabase.storage.from('documents').getPublicUrl(idPath)
+
       const { error: profileError } = await supabase.from('profiles').insert({
         id: data.user.id,
         full_name: form.full_name,
@@ -114,10 +139,13 @@ export default function RegisterForm({ onSwitchToLogin }: Props) {
         purok: form.purok,
         contact_number: form.contact_number,
         address: form.address,
-        house_type: form.house_type,
-        is_pwd: form.is_pwd,
-        is_senior: form.is_senior,
-        government_beneficiary: form.government_beneficiary,
+        valid_id_url: validIdData.publicUrl,
+        house_type: form.house_type === 'Others'
+          ? `Others: ${form.house_type_other.trim()}`
+          : form.house_type,
+        government_beneficiary: form.government_beneficiary === 'Others'
+          ? `Others: ${form.government_beneficiary_other.trim()}`
+          : form.government_beneficiary,
         with_electricity: form.with_electricity,
         with_bathroom: form.with_bathroom,
         monthly_income: form.monthly_income,
@@ -473,6 +501,24 @@ export default function RegisterForm({ onSwitchToLogin }: Props) {
           </div>
         </div>
 
+        {/* Valid ID Upload */}
+        <div style={styles.formGroup}>
+          <label style={styles.label}>Valid Government ID</label>
+          <label style={{ ...styles.cardCheckboxLabel, flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={e => set('valid_id_file', e.target.files?.[0] ?? null)}
+              style={{ display: 'none' }}
+            />
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '700', color: '#1a3a2a' }}>
+              <Upload size={18} />
+              {form.valid_id_file ? form.valid_id_file.name : 'Choose an image to upload'}
+            </span>
+            <span style={{ fontSize: '12px', color: '#9a8f7a' }}>JPG, PNG, or WebP. Maximum file size: 5 MB.</span>
+          </label>
+        </div>
+
         {/* Occupation & Education & Income Group */}
         <div style={{ ...styles.gridLayout3, marginBottom: '28px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -536,7 +582,19 @@ export default function RegisterForm({ onSwitchToLogin }: Props) {
               <option value="Permanent">Permanent</option>
               <option value="Semi-permanent">Semi-permanent</option>
               <option value="Temporary">Temporary</option>
+              <option value="Others">Others</option>
             </select>
+            {form.house_type === 'Others' && (
+              <input
+                type="text"
+                value={form.house_type_other}
+                onChange={e => set('house_type_other', e.target.value)}
+                placeholder="Specify house type"
+                style={styles.inputField}
+                onFocus={(e) => (e.currentTarget.style.borderColor = '#c9a84c')}
+                onBlur={(e) => (e.currentTarget.style.borderColor = '#ddd5c8')}
+              />
+            )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label style={styles.label}>Gov't Beneficiary</label>
@@ -551,30 +609,24 @@ export default function RegisterForm({ onSwitchToLogin }: Props) {
               <option value="4Ps">4Ps</option>
               <option value="Senior Citizen">Senior Citizen</option>
               <option value="Solo Parent">Solo Parent</option>
+              <option value="Others">Others</option>
             </select>
+            {form.government_beneficiary === 'Others' && (
+              <input
+                type="text"
+                value={form.government_beneficiary_other}
+                onChange={e => set('government_beneficiary_other', e.target.value)}
+                placeholder="Specify government benefit"
+                style={styles.inputField}
+                onFocus={(e) => (e.currentTarget.style.borderColor = '#c9a84c')}
+                onBlur={(e) => (e.currentTarget.style.borderColor = '#ddd5c8')}
+              />
+            )}
           </div>
         </div>
 
         {/* Additional Status Checkboxes */}
         <div style={styles.checkboxGrid}>
-          <label style={styles.cardCheckboxLabel} onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.5)')} onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#ddd5c8')}>
-            <input
-              type="checkbox"
-              checked={form.is_pwd}
-              onChange={e => set('is_pwd', e.target.checked)}
-              style={{ accentColor: '#1a3a2a', width: '16px', height: '16px' }}
-            />
-            <span style={{ fontSize: '14px', fontWeight: '500', color: '#1a3a2a' }}>PWD</span>
-          </label>
-          <label style={styles.cardCheckboxLabel} onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.5)')} onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#ddd5c8')}>
-            <input
-              type="checkbox"
-              checked={form.is_senior}
-              onChange={e => set('is_senior', e.target.checked)}
-              style={{ accentColor: '#1a3a2a', width: '16px', height: '16px' }}
-            />
-            <span style={{ fontSize: '14px', fontWeight: '500', color: '#1a3a2a' }}>Senior Citizen</span>
-          </label>
           <label style={styles.cardCheckboxLabel} onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.5)')} onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#ddd5c8')}>
             <input
               type="checkbox"

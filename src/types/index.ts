@@ -22,6 +22,7 @@ export interface Profile {
   monthly_income?: string
   occupation?: string
   educational_attainment?: string
+  valid_id_url?: string
 }
 
 // ─── Puroks ────────────────────────────────────────────────────────────────────

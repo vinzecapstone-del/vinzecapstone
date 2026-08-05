@@ -6,8 +6,8 @@ import { formatDate } from '@/lib/utils'
 import {
   Search, Users, MapPin, Phone, Mail, X, Filter,
   Home, Zap, Droplets, GraduationCap, Briefcase,
-  Wallet, HeartPulse, CalendarDays, ShieldCheck,
-  ChevronRight, UserCircle2, Building2, Sparkles
+  Wallet, CalendarDays, ShieldCheck,
+  ChevronRight, UserCircle2, Building2
 } from 'lucide-react'
 import type { Profile } from '@/types'
 
@@ -16,6 +16,8 @@ type ResidentProfile = Profile & {
   updated_at?: string | null
 }
 
+const isOtherValue = (value?: string | null) => value?.startsWith('Others: ') ?? false
+
 export default function ResidentsPage() {
   const [residents, setResidents] = useState<ResidentProfile[]>([])
   const [loading, setLoading] = useState(true)
@@ -23,8 +25,6 @@ export default function ResidentsPage() {
   const [purokFilter, setPurokFilter] = useState('all')
   const [houseTypeFilter, setHouseTypeFilter] = useState('all')
   const [beneficiaryFilter, setBeneficiaryFilter] = useState('all')
-  const [pwdOnly, setPwdOnly] = useState(false)
-  const [seniorOnly, setSeniorOnly] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
 
   const [selectedResident, setSelectedResident] = useState<ResidentProfile | null>(null)
@@ -43,13 +43,35 @@ export default function ResidentsPage() {
     load()
   }, [supabase])
 
+  useEffect(() => {
+    if (!selectedResident) return
+
+    const previousOverflow = document.body.style.overflow
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSelectedResident(null)
+    }
+
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [selectedResident])
+
   const filtered = useMemo(() => {
     let result = residents
     if (purokFilter !== 'all') result = result.filter(r => r.purok === purokFilter)
-    if (houseTypeFilter !== 'all') result = result.filter(r => r.house_type === houseTypeFilter)
-    if (beneficiaryFilter !== 'all') result = result.filter(r => r.government_beneficiary === beneficiaryFilter)
-    if (pwdOnly) result = result.filter(r => r.is_pwd)
-    if (seniorOnly) result = result.filter(r => r.is_senior)
+    if (houseTypeFilter !== 'all') {
+      result = result.filter(r => houseTypeFilter === 'Others'
+        ? isOtherValue(r.house_type)
+        : r.house_type === houseTypeFilter)
+    }
+    if (beneficiaryFilter !== 'all') {
+      result = result.filter(r => beneficiaryFilter === 'Others'
+        ? isOtherValue(r.government_beneficiary)
+        : r.government_beneficiary === beneficiaryFilter)
+    }
 
     if (search) {
       const s = search.toLowerCase()
@@ -62,7 +84,7 @@ export default function ResidentsPage() {
       )
     }
     return result
-  }, [search, purokFilter, houseTypeFilter, beneficiaryFilter, pwdOnly, seniorOnly, residents])
+  }, [search, purokFilter, houseTypeFilter, beneficiaryFilter, residents])
 
   const puroks = useMemo(() => 
     Array.from(new Set(residents.map(r => r.purok).filter(Boolean))).sort() as string[],
@@ -70,32 +92,28 @@ export default function ResidentsPage() {
 
   const stats = useMemo(() => ({
     total: residents.length,
-    pwd: residents.filter(r => r.is_pwd).length,
-    senior: residents.filter(r => r.is_senior).length,
+    permanent: residents.filter(r => r.house_type === 'Permanent').length,
+    semiPermanent: residents.filter(r => r.house_type === 'Semi-permanent').length,
+    temporary: residents.filter(r => r.house_type === 'Temporary').length,
+    otherHouseTypes: residents.filter(r => isOtherValue(r.house_type)).length,
     withBenefits: residents.filter(r => r.government_beneficiary && r.government_beneficiary !== 'None').length,
-    withElectricity: residents.filter(r => r.with_electricity).length,
-    withBathroom: residents.filter(r => r.with_bathroom).length,
   }), [residents])
 
   const activeFiltersCount = [
     purokFilter !== 'all',
     houseTypeFilter !== 'all',
     beneficiaryFilter !== 'all',
-    pwdOnly,
-    seniorOnly,
   ].filter(Boolean).length
 
   const clearFilters = () => {
     setPurokFilter('all')
     setHouseTypeFilter('all')
     setBeneficiaryFilter('all')
-    setPwdOnly(false)
-    setSeniorOnly(false)
     setSearch('')
   }
 
   return (
-    <div className="space-y-6 animate-fade-up">
+    <div className="space-y-6 animate-fade-up p-4 sm:p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
@@ -113,13 +131,13 @@ export default function ResidentsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         <StatCard icon={<Users size={16} />} label="Total" value={stats.total} color="#1a3a2a" bg="#f0ebe3" />
-        <StatCard icon={<HeartPulse size={16} />} label="PWD" value={stats.pwd} color="#7c3aed" bg="#f5f3ff" />
-        <StatCard icon={<Sparkles size={16} />} label="Senior" value={stats.senior} color="#059669" bg="#ecfdf5" />
+        <StatCard icon={<Home size={16} />} label="Permanent" value={stats.permanent} color="#166534" bg="#f0fdf4" />
+        <StatCard icon={<Home size={16} />} label="Semi-Permanent" value={stats.semiPermanent} color="#0369a1" bg="#f0f9ff" />
+        <StatCard icon={<Building2 size={16} />} label="Temporary" value={stats.temporary} color="#a16207" bg="#fefce8" />
+        <StatCard icon={<Home size={16} />} label="Other Homes" value={stats.otherHouseTypes} color="#7c3aed" bg="#f5f3ff" />
         <StatCard icon={<ShieldCheck size={16} />} label="Beneficiaries" value={stats.withBenefits} color="#0369a1" bg="#f0f9ff" />
-        <StatCard icon={<Zap size={16} />} label="w/ Electricity" value={stats.withElectricity} color="#ca8a04" bg="#fefce8" />
-        <StatCard icon={<Droplets size={16} />} label="w/ Bathroom" value={stats.withBathroom} color="#dc2626" bg="#fef2f2" />
       </div>
 
       {/* Search & Filters Bar */}
@@ -164,7 +182,7 @@ export default function ResidentsPage() {
 
         {/* Expandable Filters */}
         {showFilters && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-[#f0ebe3] animate-fade-up">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-3 border-t border-[#f0ebe3] animate-fade-up">
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-[#9a8f7a] uppercase tracking-wider">Purok</label>
               <select
@@ -187,6 +205,7 @@ export default function ResidentsPage() {
                 <option value="Permanent">Permanent</option>
                 <option value="Semi-permanent">Semi-permanent</option>
                 <option value="Temporary">Temporary</option>
+                <option value="Others">Others</option>
               </select>
             </div>
             <div className="space-y-1.5">
@@ -201,14 +220,8 @@ export default function ResidentsPage() {
                 <option value="4Ps">4Ps</option>
                 <option value="Senior Citizen">Senior Citizen</option>
                 <option value="Solo Parent">Solo Parent</option>
+                <option value="Others">Others</option>
               </select>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-[#9a8f7a] uppercase tracking-wider">Special Groups</label>
-              <div className="flex gap-2">
-                <ToggleChip active={pwdOnly} onClick={() => setPwdOnly(!pwdOnly)} label="PWD" />
-                <ToggleChip active={seniorOnly} onClick={() => setSeniorOnly(!seniorOnly)} label="Senior" />
-              </div>
             </div>
           </div>
         )}
@@ -238,7 +251,7 @@ export default function ResidentsPage() {
       ) : (
         <div className="bg-white rounded-2xl border border-[#e8e0d5] shadow-sm overflow-hidden">
           {/* Table Header */}
-          <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3.5 bg-[#f7f4ef] border-b border-[#e8e0d5] text-[10px] font-bold text-[#7a6a55] uppercase tracking-widest">
+          <div className="hidden md:grid grid-cols-12 gap-4 px-5 py-3.5 bg-[#f7f4ef] border-b border-[#e8e0d5] text-[10px] font-bold text-[#7a6a55] uppercase tracking-widest">
             <div className="col-span-4">Resident</div>
             <div className="col-span-2">Resident ID</div>
             <div className="col-span-2">Purok</div>
@@ -247,12 +260,14 @@ export default function ResidentsPage() {
           </div>
 
           <div className="divide-y divide-[#f7f4ef]">
-            {filtered.map(res => (
-              <div
-                key={res.id}
-                onClick={() => setSelectedResident(res)}
-                className="px-6 py-4 hover:bg-[#faf8f4] transition-all cursor-pointer group"
-              >
+            {filtered.map(res => {
+              const isSelected = selectedResident?.id === res.id
+              return (
+                <div
+                  key={res.id}
+                  onClick={() => setSelectedResident(res)}
+                  className={`px-5 py-4 transition-all cursor-pointer group hover:bg-[#faf8f4] ${isSelected ? 'bg-[#f7fbf6] border-l-4 border-[#c9a84c]' : ''}`}
+                >
                 {/* Mobile */}
                 <div className="md:hidden space-y-2">
                   <div className="flex items-center gap-3">
@@ -271,8 +286,6 @@ export default function ResidentsPage() {
                     <ChevronRight size={16} className="text-[#ddd5c8] group-hover:text-[#c9a84c] transition-colors" />
                   </div>
                   <div className="flex gap-1.5 flex-wrap ml-11">
-                    {res.is_pwd && <Badge text="PWD" color="purple" />}
-                    {res.is_senior && <Badge text="Senior" color="green" />}
                     {res.government_beneficiary && res.government_beneficiary !== 'None' && (
                       <Badge text={res.government_beneficiary} color="blue" />
                     )}
@@ -309,7 +322,8 @@ export default function ResidentsPage() {
                   </div>
                 </div>
               </div>
-            ))}
+            )
+          })}
           </div>
         </div>
       )}
@@ -317,34 +331,44 @@ export default function ResidentsPage() {
       {/* Resident Details Modal */}
       {selectedResident && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in"
+          className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-black/50 p-3 pt-[96px] backdrop-blur-sm sm:p-6 sm:pt-[112px] animate-fade-in"
           onClick={() => setSelectedResident(null)}
         >
           <div
-            className="bg-white rounded-2xl border border-[#e8e0d5] shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden animate-modal-up"
+            className="flex w-full max-w-4xl max-h-[calc(100dvh-112px)] flex-col overflow-hidden rounded-xl border border-[#e8e0d5] bg-white shadow-2xl animate-modal-up"
             onClick={e => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="resident-profile-title"
           >
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-[#e8e0d5] flex items-center justify-between bg-[#faf8f4] shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#1a3a2a] flex items-center justify-center">
-                  <UserCircle2 size={20} className="text-[#c9a84c]" />
+            <div className="flex shrink-0 items-center justify-between gap-4 border-b border-[#0f2419] bg-[#1a3a2a] px-5 py-4 sm:px-6">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#c9a84c]/15 text-[#c9a84c]">
+                  <span className="font-serif text-lg font-bold">
+                    {selectedResident.full_name?.[0]?.toUpperCase() ?? 'R'}
+                  </span>
                 </div>
-                <div>
-                  <h3 className="font-bold text-[#1a3a2a] text-base font-serif">Resident Profile</h3>
-                  <p className="text-[10px] text-[#9a8f7a] font-semibold uppercase tracking-wider">ID: {selectedResident.resident_id}</p>
+                <div className="min-w-0">
+                  <h3 id="resident-profile-title" className="truncate font-serif text-lg font-bold text-white">
+                    {selectedResident.full_name}
+                  </h3>
+                  <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#c9a84c]">
+                    Resident profile · {selectedResident.resident_id ?? 'No resident ID'}
+                  </p>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedResident(null)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-[#9a8f7a] hover:text-[#1a3a2a] hover:bg-[#f0ebe3] transition-all"
+                aria-label="Close resident profile"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#d4c4b0] transition-colors hover:bg-white/10 hover:text-white"
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 overflow-y-auto flex-1 min-h-0 space-y-6">
+            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-5 sm:p-6">
               {/* Profile Header */}
               <div className="flex items-center gap-5 pb-6 border-b border-[#f0ebe3]">
                 <div className="w-20 h-20 rounded-2xl bg-[#1a3a2a] flex items-center justify-center shrink-0 shadow-lg shadow-[#1a3a2a]/20">
@@ -361,16 +385,6 @@ export default function ResidentsPage() {
                       <MapPin size={11} className="text-[#c9a84c]" />
                       Purok {selectedResident.purok ?? '—'}
                     </span>
-                    {selectedResident.is_pwd && (
-                      <span className="inline-flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">
-                        <HeartPulse size={11} /> PWD
-                      </span>
-                    )}
-                    {selectedResident.is_senior && (
-                      <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                        <Sparkles size={11} /> Senior
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>
@@ -390,6 +404,25 @@ export default function ResidentsPage() {
                   <InfoRow icon={<Wallet size={13} />} label="Monthly Income" value={selectedResident.monthly_income ? `₱${Number(selectedResident.monthly_income).toLocaleString()}` : null} />
                   <InfoRow icon={<GraduationCap size={13} />} label="Education" value={selectedResident.educational_attainment} />
                   <InfoRow icon={<ShieldCheck size={13} />} label="Beneficiary" value={selectedResident.government_beneficiary === 'None' ? null : selectedResident.government_beneficiary} />
+                </InfoSection>
+
+                <InfoSection title="Valid Government ID" icon={<ShieldCheck size={14} />}>
+                  {selectedResident.valid_id_url ? (
+                    <a
+                      href={selectedResident.valid_id_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-fit"
+                    >
+                      <img
+                        src={selectedResident.valid_id_url}
+                        alt={`Valid ID for ${selectedResident.full_name}`}
+                        className="h-44 max-w-full rounded-lg border border-[#e8e0d5] bg-[#faf8f4] object-contain"
+                      />
+                    </a>
+                  ) : (
+                    <p className="text-sm text-[#9a8f7a]">No valid ID uploaded.</p>
+                  )}
                 </InfoSection>
 
                 {/* Living Conditions */}
@@ -424,7 +457,7 @@ export default function ResidentsPage() {
               </div>
 
               {/* Footer Info */}
-              <div className="pt-4 border-t border-[#f0ebe3] flex items-center justify-between text-xs text-[#9a8f7a]">
+              <div className="flex flex-col gap-1 border-t border-[#f0ebe3] pt-4 text-xs text-[#9a8f7a] sm:flex-row sm:items-center sm:justify-between">
                 <span>Registered on {formatDate(selectedResident.created_at)}</span>
                 <span>Last updated {selectedResident.updated_at ? formatDate(selectedResident.updated_at) : '—'}</span>
               </div>
@@ -458,21 +491,6 @@ function StatCard({ icon, label, value, color, bg }: {
         <p className="text-[10px] font-bold text-[#9a8f7a] uppercase tracking-wider mt-0.5">{label}</p>
       </div>
     </div>
-  )
-}
-
-function ToggleChip({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-        active
-          ? 'bg-[#1a3a2a] text-[#c9a84c] border-[#1a3a2a]'
-          : 'bg-white text-[#5a5040] border-[#ddd5c8] hover:border-[#c9a84c]'
-      }`}
-    >
-      {label}
-    </button>
   )
 }
 

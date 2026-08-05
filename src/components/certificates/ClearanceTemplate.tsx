@@ -211,9 +211,6 @@ export default function ClearanceTemplate({ data }: Props) {
           <span>Date Issued: {today}</span>
         </div>
 
-        <p style={{ fontSize: '9px', color: '#aaa', textAlign: 'center', marginTop: '8px' }}>
-          This document is NOT VALID without the official dry seal of Barangay {data.barangay_name}.
-        </p>
       </div>
     </div>
   )

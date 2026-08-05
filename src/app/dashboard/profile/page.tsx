@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import {
   Loader2, Save, Eye, EyeOff, User, Phone, MapPin, Lock,
   ShieldCheck, Mail, Calendar, IdCard, BadgeCheck, Home,
-  GraduationCap, Briefcase, Wallet, Zap, Bath, Accessibility
+  GraduationCap, Briefcase, Wallet, Zap, Bath
 } from 'lucide-react'
 import type { Profile } from '@/types'
 import { PUROK_LIST } from '@/types'
@@ -17,7 +17,8 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [form, setForm] = useState<Record<string, any>>({
     full_name: '', contact_number: '', address: '', purok: '',
-    house_type: '', is_pwd: false, is_senior: false, government_beneficiary: 'None',
+    house_type: '', house_type_other: '',
+    government_beneficiary: 'None', government_beneficiary_other: '',
     with_electricity: false, with_bathroom: false,
     monthly_income: '', occupation: '', educational_attainment: ''
   })
@@ -32,16 +33,20 @@ export default function ProfilePage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      const houseType = data?.house_type ?? ''
+      const beneficiary = data?.government_beneficiary ?? 'None'
+      const isOtherHouseType = houseType.startsWith('Others: ')
+      const isOtherBeneficiary = beneficiary.startsWith('Others: ')
       setProfile(data)
       setForm({
         full_name: data?.full_name ?? '',
         contact_number: data?.contact_number ?? '',
         address: data?.address ?? '',
         purok: data?.purok ?? '',
-        house_type: data?.house_type ?? '',
-        is_pwd: data?.is_pwd ?? false,
-        is_senior: data?.is_senior ?? false,
-        government_beneficiary: data?.government_beneficiary ?? 'None',
+        house_type: isOtherHouseType ? 'Others' : houseType,
+        house_type_other: isOtherHouseType ? houseType.slice('Others: '.length) : '',
+        government_beneficiary: isOtherBeneficiary ? 'Others' : beneficiary,
+        government_beneficiary_other: isOtherBeneficiary ? beneficiary.slice('Others: '.length) : '',
         with_electricity: data?.with_electricity ?? false,
         with_bathroom: data?.with_bathroom ?? false,
         monthly_income: data?.monthly_income ?? '',
@@ -58,9 +63,20 @@ export default function ProfilePage() {
 
   const handleSaveProfile = async () => {
     if (!form.full_name.trim()) { toast.error('Full name is required.'); return }
+    if (form.house_type === 'Others' && !form.house_type_other.trim()) { toast.error('Please specify the house type.'); return }
+    if (form.government_beneficiary === 'Others' && !form.government_beneficiary_other.trim()) { toast.error('Please specify the government benefit.'); return }
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
-    const { error } = await supabase.from('profiles').update(form).eq('id', user!.id)
+    const { house_type_other, government_beneficiary_other, ...profileFields } = form
+    const { error } = await supabase.from('profiles').update({
+      ...profileFields,
+      house_type: form.house_type === 'Others'
+        ? `Others: ${house_type_other.trim()}`
+        : form.house_type,
+      government_beneficiary: form.government_beneficiary === 'Others'
+        ? `Others: ${government_beneficiary_other.trim()}`
+        : form.government_beneficiary,
+    }).eq('id', user!.id)
     setSaving(false)
     if (error) { toast.error('Failed to save changes.') } else { toast.success('Profile updated!') }
   }
@@ -605,6 +621,24 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      <div className="prof-card">
+        <h2 className="prof-card-title">
+          <IdCard size={18} />
+          Valid Government ID
+        </h2>
+        {profile.valid_id_url ? (
+          <a href={profile.valid_id_url} target="_blank" rel="noopener noreferrer" className="block w-fit">
+            <img
+              src={profile.valid_id_url}
+              alt="Uploaded valid ID"
+              className="h-44 max-w-full rounded-lg border border-[#e8e0d5] bg-[#faf8f4] object-contain"
+            />
+          </a>
+        ) : (
+          <p className="text-sm text-[#9a8f7a]">No valid ID has been uploaded.</p>
+        )}
+      </div>
+
       {/* Personal Information */}
       <div className="prof-card">
         <h2 className="prof-card-title">
@@ -728,7 +762,17 @@ export default function ProfilePage() {
                 <option value="4Ps">4Ps</option>
                 <option value="Senior Citizen">Senior Citizen</option>
                 <option value="Solo Parent">Solo Parent</option>
+                <option value="Others">Others</option>
               </select>
+              {form.government_beneficiary === 'Others' && (
+                <input
+                  type="text"
+                  value={form.government_beneficiary_other}
+                  onChange={e => set('government_beneficiary_other', e.target.value)}
+                  placeholder="Specify government benefit"
+                  className="prof-input"
+                />
+              )}
             </div>
           </div>
 
@@ -744,30 +788,17 @@ export default function ProfilePage() {
                 <option value="Permanent">Permanent</option>
                 <option value="Semi-permanent">Semi-permanent</option>
                 <option value="Temporary">Temporary</option>
+                <option value="Others">Others</option>
               </select>
-            </div>
-            <div className="prof-field">
-              <div className="prof-checkbox-group">
-                <label className="prof-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={form.is_pwd}
-                    onChange={e => set('is_pwd', e.target.checked)}
-                  />
-                  <span className="prof-checkbox-text">
-                    <Accessibility size={14} className="prof-checkbox-icon" />
-                    PWD
-                  </span>
-                </label>
-                <label className="prof-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={form.is_senior}
-                    onChange={e => set('is_senior', e.target.checked)}
-                  />
-                  <span className="prof-checkbox-text">Senior Citizen</span>
-                </label>
-              </div>
+              {form.house_type === 'Others' && (
+                <input
+                  type="text"
+                  value={form.house_type_other}
+                  onChange={e => set('house_type_other', e.target.value)}
+                  placeholder="Specify house type"
+                  className="prof-input"
+                />
+              )}
             </div>
             <div className="prof-field prof-col-full">
               <div className="prof-checkbox-group">

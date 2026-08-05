@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, FilePlus, FileText,
-  FolderOpen, UserCircle, ChevronRight,
+  UserCircle, ChevronRight,
   Menu, X, Sparkles
 } from 'lucide-react'
 
@@ -13,7 +13,6 @@ const navItems = [
   { label: 'Overview',        href: '/dashboard',              icon: LayoutDashboard },
   { label: 'New Request',     href: '/dashboard/request',      icon: FilePlus },
   { label: 'My Certificates', href: '/dashboard/certificates', icon: FileText },
-  { label: 'Documents',       href: '/dashboard/documents',    icon: FolderOpen },
   { label: 'My Profile',      href: '/dashboard/profile',      icon: UserCircle },
 ]
 

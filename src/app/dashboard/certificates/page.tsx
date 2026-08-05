@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { formatDate } from '@/lib/utils'
 import {
   Search, FileText, CheckCircle2, Clock,
-  RefreshCw, MapPin, PackageCheck, Loader2, Eye, Download
+  RefreshCw, MapPin, PackageCheck, Loader2, Eye, Download, AlertCircle
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { CertificateRequest } from '@/types'
@@ -697,6 +697,33 @@ export default function CertificatesPage() {
           line-height: 1.5;
         }
 
+        .cert-alert-rejected {
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          color: #991b1b;
+          flex-direction: row;
+          align-items: flex-start;
+        }
+
+        .cert-alert-rejected svg {
+          width: 16px;
+          height: 16px;
+          flex-shrink: 0;
+          margin-top: 1px;
+        }
+
+        .cert-alert-rejected-title {
+          font-size: 0.8125rem;
+          font-weight: 700;
+          margin: 0 0 4px;
+        }
+
+        .cert-alert-rejected-desc {
+          font-size: 0.75rem;
+          line-height: 1.5;
+          margin: 0;
+        }
+
         .cert-btn-pickup {
           display: inline-flex;
           align-items: center;
@@ -1194,6 +1221,20 @@ export default function CertificatesPage() {
                         <PackageCheck size={13} />
                         I Already Picked This Up
                       </button>
+                    </div>
+                  )}
+
+                  {req.status === 'rejected' && (
+                    <div className="cert-alert cert-alert-rejected">
+                      <AlertCircle size={16} />
+                      <div>
+                        <p className="cert-alert-rejected-title">Request Rejected</p>
+                        <p className="cert-alert-rejected-desc">
+                          {req.rejection_reason
+                            ? `Reason: ${req.rejection_reason}`
+                            : 'Please contact the barangay office for more information.'}
+                        </p>
+                      </div>
                     </div>
                   )}
 

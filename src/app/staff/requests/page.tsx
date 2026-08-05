@@ -105,10 +105,7 @@ function generateCertificateHTML(req: RequestWithProfile, settings: SystemSettin
     .sig-name{font-weight:bold;font-size:14px}
     .sig-role{font-size:11px;color:#555}
     .sig-role{margin-top:2px}
-    .seal{width:90px;height:90px;border-radius:50%;border:3px solid #1a3a2a;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px;text-transform:uppercase;line-height:1.4}
-    .seal-inner{border:1.5px dashed #c9a84c;border-radius:50%;width:76px;height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:7px;font-weight:bold;color:#1a3a2a;text-align:center;padding:6px}
     .footer{border-top:1px solid #ccc;padding-top:10px;display:flex;justify-content:space-between;font-size:9px;color:#999}
-    .validity{font-size:9px;color:#bbb;text-align:center;margin-top:8px}
     .or-box{border:1px solid #ddd;border-radius:4px;padding:6px 12px;font-size:10px;color:#555;text-align:center}
     .cedula-table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:12px}
     .cedula-table td{padding:5px 8px;border:1px solid #ccc}
@@ -157,14 +154,6 @@ function generateCertificateHTML(req: RequestWithProfile, settings: SystemSettin
 
     <div class="issued">Issued this <strong>${today}</strong> at Barangay ${settings.barangay_name}.</div>
     <div class="sig-section">
-      <div class="seal">
-        <div class="seal-inner">
-          <div>OFFICIAL</div>
-          <div>DRY SEAL</div>
-          <div style="margin-top:4px;font-size:6px">BARANGAY</div>
-          <div style="font-size:6px">${settings.barangay_name.toUpperCase()}</div>
-        </div>
-      </div>
       <div class="sig-block">
         <div class="esig-label">Electronically Signed</div>
         <img src="/sign.png" alt="Captain Signature" style="width:220px;height:auto;display:block;margin:0 auto 4px;max-height:52px;object-fit:contain;">
@@ -185,9 +174,6 @@ function generateCertificateHTML(req: RequestWithProfile, settings: SystemSettin
       <span>Tracking No: <strong style="color:#555">${req.tracking_number}</strong>${req.reference_number ? ` &bull; Ref. No.: <strong style="color:#555">${req.reference_number}</strong>` : ''}</span>
       <span>Generated: ${today}</span>
       <span>Valid for: 6 months from issuance</span>
-    </div>
-    <div class="validity">
-      This document is NOT VALID without the official dry seal of Barangay ${settings.barangay_name}.
     </div>
   </div>
 </body>
@@ -978,6 +964,59 @@ export default function StaffRequestsPage() {
           height: 14px;
         }
 
+        .srq-id-preview {
+          margin: 16px 0;
+          padding: 16px;
+          background: #f7f4ef;
+          border: 1px solid #e8e0d5;
+          border-radius: 10px;
+        }
+
+        .srq-id-preview-header {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin: 0 0 12px;
+          color: #1a3a2a;
+          font-size: 0.8125rem;
+          font-weight: 700;
+        }
+
+        .srq-id-preview-header svg {
+          width: 15px;
+          height: 15px;
+          color: #c9a84c;
+        }
+
+        .srq-id-preview-image,
+        .srq-id-preview-pdf {
+          display: block;
+          width: 100%;
+          height: 260px;
+          border: 1px solid #e8e0d5;
+          border-radius: 6px;
+          background: #ffffff;
+        }
+
+        .srq-id-preview-image {
+          object-fit: contain;
+        }
+
+        .srq-id-preview-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          margin-top: 12px;
+          color: #1a3a2a;
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-decoration: none;
+        }
+
+        .srq-id-preview-link:hover {
+          color: #c9a84c;
+        }
+
         .srq-modal-overlay {
           position: fixed;
           inset: 0;
@@ -1316,6 +1355,7 @@ export default function StaffRequestsPage() {
           {filtered.map(req => {
             const certHtml = req.certificate_html ?? null
             const idUrl = req.id_document_url ?? null
+            const idIsPdf = idUrl ? /\.pdf(?:$|[?#])/i.test(idUrl) : false
             const displayName = req.applicant_name ?? req.profiles?.full_name ?? '—'
             const statusStyle = STATUS_STYLES[req.status] || STATUS_STYLES.pending
 
@@ -1508,8 +1548,39 @@ export default function StaffRequestsPage() {
                     </div>
                   )}
 
+                  {req.status === 'pending' && idUrl && (
+                    <section className="srq-id-preview" aria-label={`Submitted ID for ${displayName}`}>
+                      <p className="srq-id-preview-header">
+                        <FileText size={15} />
+                        Submitted ID
+                      </p>
+                      {idIsPdf ? (
+                        <iframe
+                          className="srq-id-preview-pdf"
+                          src={idUrl}
+                          title={`Submitted ID for ${displayName}`}
+                        />
+                      ) : (
+                        <img
+                          className="srq-id-preview-image"
+                          src={idUrl}
+                          alt={`Submitted ID for ${displayName}`}
+                        />
+                      )}
+                      <a
+                        href={idUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="srq-id-preview-link"
+                      >
+                        <ExternalLink size={14} />
+                        Open full ID
+                      </a>
+                    </section>
+                  )}
+
                   {/* ID Document Link */}
-                  {idUrl && (
+                  {idUrl && req.status !== 'pending' && (
                     <a
                       href={idUrl}
                       target="_blank"
