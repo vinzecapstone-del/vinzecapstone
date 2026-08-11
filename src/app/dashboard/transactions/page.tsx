@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { formatDate } from '@/lib/utils'
+import { formatDate, stripLogoSeal } from '@/lib/utils'
 import { Receipt, FileText, Eye, Download } from 'lucide-react'
 import type { CertificateRequest } from '@/types'
 import { CERTIFICATE_LABELS } from '@/types'
@@ -33,7 +33,8 @@ export default function TransactionsPage() {
   const handlePrint = (html: string) => {
     const win = window.open('', '_blank')
     if (!win) return
-    win.document.write(html)
+    const cleaned = stripLogoSeal(html)
+    win.document.write(cleaned)
     win.document.close()
     win.onload = () => win.print()
   }
@@ -99,7 +100,7 @@ export default function TransactionsPage() {
                   {(req.status === 'ready' || req.status === 'picked_up') && req.certificate_html && (
                     <>
                       <button
-                        onClick={() => setPreviewHtml(req.certificate_html!)}
+                        onClick={() => setPreviewHtml(stripLogoSeal(req.certificate_html!))}
                         className="flex items-center gap-1.5 px-3 py-1.5 border border-[#ddd5c8] rounded-lg text-[10px] font-bold text-[#5a5040] hover:bg-[#f7f4ef] transition-all"
                       >
                         <Eye size={12} /> Preview

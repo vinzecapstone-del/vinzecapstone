@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { formatDate } from '@/lib/utils'
+import { formatDate, stripLogoSeal } from '@/lib/utils'
 import {
   Search, FileText, CheckCircle2, Clock,
   RefreshCw, MapPin, PackageCheck, Loader2, Eye, Download, AlertCircle
@@ -147,7 +147,8 @@ export default function CertificatesPage() {
   const handlePrint = (html: string) => {
     const win = window.open('', '_blank')
     if (!win) return
-    win.document.write(html)
+    const cleaned = stripLogoSeal(html)
+    win.document.write(cleaned)
     win.document.close()
     win.onload = () => win.print()
   }
@@ -1253,14 +1254,14 @@ export default function CertificatesPage() {
                     {(req.status === 'ready' || req.status === 'picked_up') && req.certificate_html && (
                       <div className="cert-actions">
                         <button
-                          onClick={() => setPreviewHtml(req.certificate_html!)}
-                          className="cert-btn-sm cert-btn-sm-outline"
-                        >
+                            onClick={() => setPreviewHtml(stripLogoSeal(req.certificate_html!))}
+                            className="cert-btn-sm cert-btn-sm-outline"
+                          >
                           <Eye size={12} />
                           Preview
                         </button>
                         <button
-                          onClick={() => handlePrint(req.certificate_html!)}
+                          onClick={() => handlePrint(stripLogoSeal(req.certificate_html!))}
                           className="cert-btn-sm cert-btn-sm-dark"
                         >
                           <Download size={12} />

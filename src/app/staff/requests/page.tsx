@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { formatDate } from '@/lib/utils'
+import { formatDate, stripLogoSeal } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
   Search, CheckCircle2, XCircle, Loader2, Clock,
@@ -244,7 +244,7 @@ export default function StaffRequestsPage() {
   const handleApprove = async (req: RequestWithProfile) => {
     if (!settings) { toast.error('System settings not loaded.'); return }
     setActionLoading(req.id)
-    const certHtml = generateCertificateHTML(req, settings)
+    const certHtml = stripLogoSeal(generateCertificateHTML(req, settings))
     const { error } = await supabase
       .from('certificate_requests')
       .update({ status: 'ready', certificate_html: certHtml, certificate_generated_at: new Date().toISOString() })
@@ -311,7 +311,8 @@ export default function StaffRequestsPage() {
   const handlePrint = (html: string) => {
     const win = window.open('', '_blank')
     if (!win) return
-    win.document.write(html)
+    const cleaned = stripLogoSeal(html)
+    win.document.write(cleaned)
     win.document.close()
     win.onload = () => win.print()
   }
@@ -1626,14 +1627,14 @@ export default function StaffRequestsPage() {
                     {(req.status === 'ready' || req.status === 'picked_up') && certHtml && (
                       <>
                         <button
-                          onClick={() => handlePrint(certHtml)}
+                          onClick={() => handlePrint(stripLogoSeal(certHtml ?? ''))}
                           className="srq-btn srq-btn-primary"
                         >
                           <Download size={14} />
                           Print Certificate
                         </button>
                         <button
-                          onClick={() => setPreviewHtml(certHtml)}
+                          onClick={() => setPreviewHtml(stripLogoSeal(certHtml ?? ''))}
                           className="srq-btn srq-btn-secondary"
                         >
                           <Eye size={14} />

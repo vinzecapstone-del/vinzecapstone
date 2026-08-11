@@ -29,3 +29,16 @@ export function getStatusColor(status: string): string {
   }
   return colors[status] ?? 'bg-gray-100 text-gray-800'
 }
+
+export function stripLogoSeal(html: string): string {
+  if (!html) return html
+  // Remove <img> tags whose src or alt contains 'logo' or 'seal' (case-insensitive)
+  return html.replace(/<img\b[^>]*>/gi, (tag) => {
+    const srcMatch = tag.match(/\bsrc\s*=\s*['\"]?([^'\">\s]+)['\"]?/i)
+    const altMatch = tag.match(/\balt\s*=\s*['\"]([^'\"]*)['\"]/i)
+    const src = srcMatch ? srcMatch[1] : ''
+    const alt = altMatch ? altMatch[1] : ''
+    if (/logo|seal/i.test(src) || /logo|seal/i.test(alt)) return ''
+    return tag
+  })
+}
